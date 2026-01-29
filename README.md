@@ -10,6 +10,15 @@ skeleton, health endpoints, config, and request-ID logging.
 - Redis (to be wired in Day 2+)
 - Request-ID middleware for traceability
 
+## Design: Token Bucket (pure function)
+- `capacity`: max tokens the bucket can hold.
+- `refill_rate_per_sec`: tokens added per second (fractional OK).
+- `try_consume(config, state, cost, now_s)`:
+  - Refill to `now_s`, then attempt to deduct `cost`.
+  - Returns `(Decision, new_state)`.
+  - If `cost > capacity`: permanently denied (`retry_after_s=None`).
+  - If not enough tokens: denied with `retry_after_s = (cost - tokens)/refill_rate_per_sec`.
+
 ## Quick Start (Dev)
 ```bash
 python3 -m venv .venv
