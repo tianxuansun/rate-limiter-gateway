@@ -6,6 +6,9 @@ class Settings(BaseSettings):
     REDIS_URL: str = "redis://localhost:6379/0"
     LOG_LEVEL: str = "INFO"
 
+    BUCKET_CAPACITY: float = 5.0
+    BUCKET_REFILL_RATE_PER_SEC: float = 1.0
+    REDIS_KEY_PREFIX: str = "bucket:"
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
 settings = Settings()
