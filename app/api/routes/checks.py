@@ -1,16 +1,17 @@
 import math
+
 from fastapi import APIRouter, Depends, Response
 from pydantic import BaseModel, Field
 
 from app.api.deps import get_redis
 from app.core.config import settings
-from app.ratelimit.redis_bucket import try_consume_redis, Decision
 from app.metrics import (
     RATE_LIMIT_CHECKS_TOTAL,
-    RATE_LIMIT_REDIS_ERRORS_TOTAL,
     RATE_LIMIT_DECISION_LATENCY_SECONDS,
+    RATE_LIMIT_REDIS_ERRORS_TOTAL,
     monotonic_s,
 )
+from app.ratelimit.redis_bucket import Decision, try_consume_redis
 
 router = APIRouter()
 
@@ -66,7 +67,9 @@ async def check_rate_limit(req: CheckRequest, response: Response, r=Depends(get_
 
     # Standard-ish rate limit headers
     response.headers["RateLimit-Limit"] = str(cap)
-    response.headers["RateLimit-Remaining"] = str(max(0, int(math.floor(decision.remaining_tokens))))
+    remaining = max(0, int(math.floor(decision.remaining_tokens)))
+    response.headers["RateLimit-Remaining"] = str(remaining)
+
 
     reset_s = 0
     if (not decision.allowed) and decision.retry_after_s is not None:

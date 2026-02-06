@@ -1,4 +1,5 @@
 import math
+
 from app.ratelimit.token_bucket import BucketConfig, BucketState, try_consume
 
 T0 = 1_000.0  # arbitrary epoch seconds

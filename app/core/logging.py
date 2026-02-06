@@ -1,9 +1,11 @@
 import logging
 import sys
 import uuid
+from typing import Callable
+
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
-from typing import Callable
+
 
 def setup_logging(level: str = "INFO") -> None:
     logging.basicConfig(

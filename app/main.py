@@ -1,11 +1,14 @@
-from fastapi import FastAPI, Response
 from contextlib import asynccontextmanager
-from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
-from app.core.metrics_middleware import MetricsMiddleware
+
+from fastapi import FastAPI, Response
+from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
+
 from app.api.router import api_router
 from app.core.config import settings
-from app.core.logging import setup_logging, RequestIdMiddleware
+from app.core.logging import RequestIdMiddleware, setup_logging
+from app.core.metrics_middleware import MetricsMiddleware
 from app.db.redis_client import create_redis
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
