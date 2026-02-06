@@ -1,8 +1,9 @@
-from starlette.middleware.base import BaseHTTPMiddleware
-from starlette.requests import Request
 from typing import Callable
 
-from app.metrics import HTTP_REQUESTS_TOTAL, HTTP_REQUEST_LATENCY_SECONDS, monotonic_s
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.requests import Request
+
+from app.metrics import HTTP_REQUEST_LATENCY_SECONDS, HTTP_REQUESTS_TOTAL, monotonic_s
 
 
 class MetricsMiddleware(BaseHTTPMiddleware):
@@ -11,12 +12,17 @@ class MetricsMiddleware(BaseHTTPMiddleware):
         response = await call_next(request)
         elapsed = monotonic_s() - start
 
-        # Use raw path (avoid high-cardinality labels)
-        path = request.url.path
+        # Prefer route template path (low cardinality), fallback to raw path
+        route = request.scope.get("route")
+        if route and getattr(route, "path", None):
+            path_label = route.path
+        else:
+            path_label = request.url.path
+
         method = request.method
         status = str(response.status_code)
 
-        HTTP_REQUESTS_TOTAL.labels(method=method, path=path, status=status).inc()
-        HTTP_REQUEST_LATENCY_SECONDS.labels(method=method, path=path).observe(elapsed)
+        HTTP_REQUESTS_TOTAL.labels(method=method, path=path_label, status=status).inc()
+        HTTP_REQUEST_LATENCY_SECONDS.labels(method=method, path=path_label).observe(elapsed)
 
         return response
