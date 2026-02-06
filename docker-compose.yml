@@ -1,0 +1,17 @@
+services:
+  redis:
+    image: redis:7-alpine
+    # remove ports entirely
+
+  gateway:
+    build: .
+    depends_on:
+      - redis
+    environment:
+      REDIS_URL: "redis://redis:6379/0"
+      LOG_LEVEL: "INFO"
+      BUCKET_CAPACITY: "5"
+      BUCKET_REFILL_RATE_PER_SEC: "1"
+      REDIS_KEY_PREFIX: "bucket:"
+    ports:
+      - "8000:8000"
