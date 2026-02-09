@@ -26,6 +26,7 @@ python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 ./scripts/run_dev.sh
+```
 
 ## Quick Start (Docker)
 docker compose up --build
