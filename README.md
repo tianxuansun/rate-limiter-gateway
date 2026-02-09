@@ -26,3 +26,27 @@ python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 ./scripts/run_dev.sh
+
+## Quick Start (Docker)
+docker compose up --build
+curl -i http://localhost:8000/healthz
+curl -i -X POST http://localhost:8000/api/check -H 'content-type: application/json' -d '{"key":"u1","cost":1}'
+
+## Endpoints
+/healthz (liveness)
+/api/readyz (readiness + Redis ping)
+/api/check (token bucket decision + headers)
+/metrics (Prometheus)
+
+## Rate-limit headers
+
+RateLimit-Limit
+RateLimit-Remaining
+RateLimit-Reset
+Retry-After
+
+## Runbook
+
+If /api/readyz fails → Redis is down / wrong REDIS_URL
+Check compose logs: docker compose logs -f gateway redis
+Verify Redis healthy: docker compose ps
