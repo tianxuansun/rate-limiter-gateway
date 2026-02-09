@@ -6,6 +6,9 @@ class Settings(BaseSettings):
     APP_ENV: str = "dev"
     REDIS_URL: str = "redis://localhost:6379/0"
     LOG_LEVEL: str = "INFO"
+    GIT_SHA: str = "dev"
+    APP_VERSION: str = "0.1.0"
+
 
     BUCKET_CAPACITY: float = 5.0
     BUCKET_REFILL_RATE_PER_SEC: float = 1.0
