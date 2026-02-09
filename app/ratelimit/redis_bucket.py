@@ -47,11 +47,13 @@ else
 end
 """
 
+
 class Decision:
     def __init__(self, allowed: bool, remaining_tokens: float, retry_after_s: Optional[float]):
         self.allowed = allowed
         self.remaining_tokens = remaining_tokens
         self.retry_after_s = retry_after_s
+
 
 async def try_consume_redis(
     r: "redis.Redis",

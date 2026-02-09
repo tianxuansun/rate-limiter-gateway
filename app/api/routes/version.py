@@ -4,6 +4,7 @@ from app.core.config import settings
 
 router = APIRouter()
 
+
 @router.get("", summary="Build/version info")
 async def version():
     return {

@@ -11,6 +11,7 @@ class BucketConfig:
     capacity: maximum tokens the bucket can hold.
     refill_rate_per_sec: tokens added per second (can be fractional).
     """
+
     capacity: float
     refill_rate_per_sec: float
 
@@ -27,6 +28,7 @@ class BucketState:
     tokens: current tokens in the bucket (float to allow fractions).
     last_refill_ts: epoch seconds when we last refilled (float).
     """
+
     tokens: float
     last_refill_ts: float
 
@@ -43,6 +45,7 @@ class Decision:
     retry_after_s: seconds until enough tokens accrue (None if not applicable,
                    e.g., when cost > capacity and can never be satisfied).
     """
+
     allowed: bool
     remaining_tokens: float
     retry_after_s: Optional[float]

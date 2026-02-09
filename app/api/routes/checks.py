@@ -70,7 +70,6 @@ async def check_rate_limit(req: CheckRequest, response: Response, r=Depends(get_
     remaining = max(0, int(math.floor(decision.remaining_tokens)))
     response.headers["RateLimit-Remaining"] = str(remaining)
 
-
     reset_s = 0
     if (not decision.allowed) and decision.retry_after_s is not None:
         reset_s = int(math.ceil(decision.retry_after_s))

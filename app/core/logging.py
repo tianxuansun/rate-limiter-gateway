@@ -14,6 +14,7 @@ def setup_logging(level: str = "INFO") -> None:
         stream=sys.stdout,
     )
 
+
 class RequestIdMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next: Callable):
         # Pass through X-Request-Id or generate one

@@ -32,8 +32,10 @@ RATE_LIMIT_DECISION_LATENCY_SECONDS = Histogram(
     "Latency for Redis token-bucket decision",
 )
 
+
 def now_s() -> float:
     return time.time()
+
 
 def monotonic_s() -> float:
     return time.perf_counter()
