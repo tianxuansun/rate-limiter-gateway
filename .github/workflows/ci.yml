@@ -45,3 +45,13 @@ jobs:
       - name: Tests
         run: |
           pytest -q
+      - name: Format check (ruff)
+        run: |
+          ruff format --check .
+  docker-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build Docker image
+        run: docker build -t rate-limiter-gateway:ci .
+
