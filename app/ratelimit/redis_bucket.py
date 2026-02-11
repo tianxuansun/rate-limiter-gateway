@@ -56,7 +56,6 @@ end
 """
 
 
-
 class Decision:
     def __init__(self, allowed: bool, remaining_tokens: float, retry_after_s: Optional[float]):
         self.allowed = allowed
