@@ -9,6 +9,8 @@ skeleton, health endpoints, config, and request-ID logging.
 - Pydantic Settings for config (`.env`)
 - Redis (to be wired in Day 2+)
 - Request-ID middleware for traceability
+- /api/check: decision-only (always 200)
+- /api/enforce: enforcement (200/429), include Retry-After
 
 ## Design: Token Bucket (pure function)
 - `capacity`: max tokens the bucket can hold.
