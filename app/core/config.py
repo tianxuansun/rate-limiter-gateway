@@ -11,6 +11,7 @@ class Settings(BaseSettings):
 
     BUCKET_CAPACITY: float = 5.0
     BUCKET_REFILL_RATE_PER_SEC: float = 1.0
+    BUCKET_KEY_TTL_SEC: int = 3600
     REDIS_KEY_PREFIX: str = "bucket:"
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 

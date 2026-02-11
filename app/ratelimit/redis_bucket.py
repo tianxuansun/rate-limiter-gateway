@@ -7,7 +7,7 @@ import redis.asyncio as redis
 
 # Atomic token-bucket in Lua:
 # KEYS[1] = bucket key
-# ARGV: capacity, rate_per_sec, cost, now_s
+# ARGV: capacity, rate_per_sec, cost, now_s, ttl_sec
 # Returns: {allowed(0/1), remaining_tokens(float), retry_after(float or -1)}
 LUA_TOKEN_BUCKET = r"""
 local key = KEYS[1]
@@ -15,6 +15,14 @@ local capacity = tonumber(ARGV[1])
 local rate = tonumber(ARGV[2])
 local cost = tonumber(ARGV[3])
 local now = tonumber(ARGV[4])
+local ttl = tonumber(ARGV[5])
+
+local function persist(tokens, last)
+  redis.call('HSET', key, 'tokens', tokens, 'last', last)
+  if ttl ~= nil and ttl > 0 then
+    redis.call('EXPIRE', key, ttl)
+  end
+end
 
 local tokens = tonumber(redis.call('HGET', key, 'tokens'))
 local last = tonumber(redis.call('HGET', key, 'last'))
@@ -31,21 +39,22 @@ end
 
 if cost > capacity then
   -- impossible request, still write back refilled state
-  redis.call('HSET', key, 'tokens', tokens, 'last', now)
+  persist(tokens, now)
   return {0, tokens, -1}
 end
 
 if tokens + 1e-12 >= cost then
   tokens = tokens - cost
-  redis.call('HSET', key, 'tokens', tokens, 'last', now)
+  persist(tokens, now)
   return {1, tokens, 0}
 else
   local needed = cost - tokens
   local retry_after = needed / rate
-  redis.call('HSET', key, 'tokens', tokens, 'last', now)
+  persist(tokens, now)
   return {0, tokens, retry_after}
 end
 """
+
 
 
 class Decision:
@@ -62,6 +71,7 @@ async def try_consume_redis(
     capacity: float,
     refill_rate_per_sec: float,
     cost: float,
+    ttl_sec: int,
     now_s: Optional[float] = None,
     prefix: str = "bucket:",
 ) -> Decision:
@@ -78,7 +88,9 @@ async def try_consume_redis(
         str(refill_rate_per_sec),
         str(cost),
         str(now_s),
+        str(ttl_sec),
     )
+
     # res is [allowed_int, remaining, retry_after]
     allowed_int, remaining, retry_after = res
     if isinstance(allowed_int, str):
