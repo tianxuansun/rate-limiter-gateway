@@ -29,9 +29,11 @@ pip install -r requirements.txt
 ```
 
 ## Quick Start (Docker)
+```bash
 docker compose up --build
 curl -i http://localhost:8000/healthz
 curl -i -X POST http://localhost:8000/api/check -H 'content-type: application/json' -d '{"key":"u1","cost":1}'
+```
 
 ## Endpoints
 /healthz (liveness)
