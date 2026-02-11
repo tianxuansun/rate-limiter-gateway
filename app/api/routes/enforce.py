@@ -33,7 +33,11 @@ class EnforceResponse(BaseModel):
 @router.post("", response_model=EnforceResponse, summary="Enforced rate limit (429 on deny)")
 async def enforce_rate_limit(req: EnforceRequest, response: Response, r=Depends(get_redis)):
     cap = req.capacity if req.capacity is not None else settings.BUCKET_CAPACITY
-    rate = req.refill_rate_per_sec if req.refill_rate_per_sec is not None else settings.BUCKET_REFILL_RATE_PER_SEC
+    rate = (
+        req.refill_rate_per_sec
+        if req.refill_rate_per_sec is not None
+        else settings.BUCKET_REFILL_RATE_PER_SEC
+    )
 
     start = monotonic_s()
     try:
@@ -78,7 +82,11 @@ async def enforce_rate_limit(req: EnforceRequest, response: Response, r=Depends(
         response.status_code = 429
 
     if req.cost > cap:
-        return EnforceResponse(allowed=False, remaining_tokens=decision.remaining_tokens, retry_after_s=None)
+        return EnforceResponse(
+            allowed=False,
+            remaining_tokens=decision.remaining_tokens,
+            retry_after_s=None,
+        )
 
     return EnforceResponse(
         allowed=decision.allowed,
