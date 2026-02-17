@@ -1,7 +1,7 @@
 # Rate-Limiter Gateway
 
 Small gateway service that will expose a `POST /check` endpoint to decide **allow/deny**
-based on per-key token-bucket limits (coming in Day 2+). Day 1 sets up the FastAPI
+based on per-key token-bucket limits. sets up the FastAPI
 skeleton, health endpoints, config, and request-ID logging.
 
 ## Tech
