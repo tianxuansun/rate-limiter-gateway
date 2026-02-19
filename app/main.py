@@ -2,9 +2,9 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Response
 from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
-from app.core.body_limit_middleware import BodyLimitMiddleware
 
 from app.api.router import api_router
+from app.core.body_limit_middleware import BodyLimitMiddleware
 from app.core.config import settings
 from app.core.logging import RequestIdMiddleware, setup_logging
 from app.core.metrics_middleware import MetricsMiddleware
