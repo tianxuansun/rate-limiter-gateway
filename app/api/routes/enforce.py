@@ -56,15 +56,25 @@ async def enforce_rate_limit(req: EnforceRequest, response: Response, r=Depends(
     finally:
         RATE_LIMIT_DECISION_LATENCY_SECONDS.observe(monotonic_s() - start)
 
-    # metrics label
+    # Classify result
     if req.cost > cap:
-        RATE_LIMIT_CHECKS_TOTAL.labels(result="impossible").inc()
+        result = "impossible"
     elif decision.allowed:
-        RATE_LIMIT_CHECKS_TOTAL.labels(result="allowed").inc()
+        result = "allowed"
     else:
-        RATE_LIMIT_CHECKS_TOTAL.labels(result="denied").inc()
+        result = "denied"
 
-    # headers
+    # Metrics
+    RATE_LIMIT_CHECKS_TOTAL.labels(result=result).inc()
+
+    # Decision headers (helpful for clients)
+    response.headers["X-RateLimit-Decision"] = result
+    if result == "impossible":
+        response.headers["RateLimit-Reason"] = "cost_exceeds_capacity"
+    elif result == "denied":
+        response.headers["RateLimit-Reason"] = "insufficient_tokens"
+
+    # Standard-ish rate limit headers
     response.headers["RateLimit-Limit"] = str(cap)
     remaining = max(0, int(math.floor(decision.remaining_tokens)))
     response.headers["RateLimit-Remaining"] = str(remaining)
@@ -77,11 +87,11 @@ async def enforce_rate_limit(req: EnforceRequest, response: Response, r=Depends(
     if not decision.allowed and decision.retry_after_s is not None:
         response.headers["Retry-After"] = str(reset_s)
 
-    # enforce 429 when denied and it was not "impossible"
-    if req.cost <= cap and not decision.allowed:
+    # Enforce 429 when denied (but not for "impossible")
+    if result == "denied":
         response.status_code = 429
 
-    if req.cost > cap:
+    if result == "impossible":
         return EnforceResponse(
             allowed=False,
             remaining_tokens=decision.remaining_tokens,

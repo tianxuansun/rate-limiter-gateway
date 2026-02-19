@@ -58,13 +58,23 @@ async def check_rate_limit(req: CheckRequest, response: Response, r=Depends(get_
     finally:
         RATE_LIMIT_DECISION_LATENCY_SECONDS.observe(monotonic_s() - start)
 
-    # Update counters (allowed/denied/impossible)
+    # Classify result
     if req.cost > cap:
-        RATE_LIMIT_CHECKS_TOTAL.labels(result="impossible").inc()
+        result = "impossible"
     elif decision.allowed:
-        RATE_LIMIT_CHECKS_TOTAL.labels(result="allowed").inc()
+        result = "allowed"
     else:
-        RATE_LIMIT_CHECKS_TOTAL.labels(result="denied").inc()
+        result = "denied"
+
+    # Metrics
+    RATE_LIMIT_CHECKS_TOTAL.labels(result=result).inc()
+
+    # Decision headers (helpful for clients)
+    response.headers["X-RateLimit-Decision"] = result
+    if result == "impossible":
+        response.headers["RateLimit-Reason"] = "cost_exceeds_capacity"
+    elif result == "denied":
+        response.headers["RateLimit-Reason"] = "insufficient_tokens"
 
     # Standard-ish rate limit headers
     response.headers["RateLimit-Limit"] = str(cap)
@@ -80,8 +90,7 @@ async def check_rate_limit(req: CheckRequest, response: Response, r=Depends(get_
         response.headers["Retry-After"] = str(reset_s)
 
     # Response body
-    if req.cost > cap:
-        # cost > capacity is impossible; we return retry_after_s=None for clarity
+    if result == "impossible":
         return CheckResponse(
             allowed=False,
             remaining_tokens=decision.remaining_tokens,
