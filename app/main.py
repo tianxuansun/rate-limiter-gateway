@@ -2,6 +2,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Response
 from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
+from app.core.body_limit_middleware import BodyLimitMiddleware
 
 from app.api.router import api_router
 from app.core.config import settings
@@ -26,8 +27,9 @@ def create_app() -> FastAPI:
     app = FastAPI(title=settings.APP_NAME, lifespan=lifespan)
 
     # Middlewares
-    app.add_middleware(RequestIdMiddleware)
+    app.add_middleware(BodyLimitMiddleware, max_body_bytes=settings.MAX_BODY_BYTES)
     app.add_middleware(MetricsMiddleware)
+    app.add_middleware(RequestIdMiddleware)
 
     # Health for infra probes
     @app.get("/healthz", tags=["Health"])
