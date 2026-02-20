@@ -1,57 +1,46 @@
 # Rate-Limiter Gateway
 
-Small gateway service that will expose a `POST /check` endpoint to decide **allow/deny**
-based on per-key token-bucket limits. sets up the FastAPI
-skeleton, health endpoints, config, and request-ID logging.
+A small gateway service that implements **token-bucket rate limiting per key** backed by Redis.
+It exposes:
+- `POST /api/check` → **decision-only** (always 200)
+- `POST /api/enforce` → **enforcement** (200 or 429)
+
+Includes Prometheus metrics, readiness checks, request IDs, and Docker Compose for local runs.
 
 ## Tech
 - FastAPI + Uvicorn
-- Pydantic Settings for config (`.env`)
-- Redis (to be wired in Day 2+)
-- Request-ID middleware for traceability
-- /api/check: decision-only (always 200)
-- /api/enforce: enforcement (200/429), include Retry-After
+- Redis + Lua script (atomic token bucket)
+- Prometheus `/metrics`
+- GitHub Actions CI
+- Docker / Docker Compose
 
-## Design: Token Bucket (pure function)
-- `capacity`: max tokens the bucket can hold.
-- `refill_rate_per_sec`: tokens added per second (fractional OK).
-- `try_consume(config, state, cost, now_s)`:
-  - Refill to `now_s`, then attempt to deduct `cost`.
-  - Returns `(Decision, new_state)`.
-  - If `cost > capacity`: permanently denied (`retry_after_s=None`).
-  - If not enough tokens: denied with `retry_after_s = (cost - tokens)/refill_rate_per_sec`.
+## Endpoints
+- `GET /healthz` — liveness
+- `GET /metrics` — Prometheus scrape
+- `POST /api/check` — decision-only (always 200)
+- `POST /api/enforce` — enforcement (200 or 429)
+- `GET /api/readyz` — readiness (Redis ping)
+- `GET /api/version` — build metadata
 
+## Rate-limit headers
+Returned on `/api/check` and `/api/enforce`:
+- `RateLimit-Limit`
+- `RateLimit-Remaining`
+- `RateLimit-Reset`
+- `Retry-After` (only when denied)
+
+Additional debug headers:
+- `X-RateLimit-Decision: allowed|denied|impossible`
+- `RateLimit-Reason: insufficient_tokens|cost_exceeds_capacity` (only when not allowed)
+
+## Request size limit
+Gateway rejects oversized API requests with `413 Payload Too Large`.
+Config: `MAX_BODY_BYTES` (default `32768`).
 
 ## Quick Start (Dev)
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
+pip install -r requirements-dev.txt
 ./scripts/run_dev.sh
-```
-
-## Quick Start (Docker)
-```bash
-docker compose up --build
-curl -i http://localhost:8000/healthz
-curl -i -X POST http://localhost:8000/api/check -H 'content-type: application/json' -d '{"key":"u1","cost":1}'
-```
-
-## Endpoints
-/healthz (liveness)
-/api/readyz (readiness + Redis ping)
-/api/check (token bucket decision + headers)
-/metrics (Prometheus)
-
-## Rate-limit headers
-
-RateLimit-Limit
-RateLimit-Remaining
-RateLimit-Reset
-Retry-After
-
-## Runbook
-
-If /api/readyz fails → Redis is down / wrong REDIS_URL
-Check compose logs: docker compose logs -f gateway redis
-Verify Redis healthy: docker compose ps
