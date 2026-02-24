@@ -29,7 +29,12 @@ class EnforceRequest(BaseModel):
     key: str = Field(min_length=1, description="Rate limit key (user id, api key, ip, etc.)")
     cost: float = Field(ge=0, description="Tokens to consume for this operation")
 
-    capacity: float | None = Field(default=None, gt=0, description="Optional override of bucket capacity")
+    capacity: float | None = Field(
+        default=None,
+        gt=0,
+        description="Optional override of bucket capacity",
+    )
+
     refill_rate_per_sec: float | None = Field(
         default=None, gt=0, description="Optional override of refill rate (tokens/sec)"
     )
@@ -48,7 +53,6 @@ class EnforceResponse(BaseModel):
     allowed: bool
     remaining_tokens: float
     retry_after_s: float | None
-
 
 
 @router.post(
