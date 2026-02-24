@@ -17,21 +17,51 @@ router = APIRouter()
 
 
 class CheckRequest(BaseModel):
-    key: str = Field(min_length=1)
-    cost: float = Field(ge=0)
+    model_config = {
+        "json_schema_extra": {
+            "examples": [
+                {"key": "user-123", "cost": 1},
+                {"key": "vip-user", "cost": 2, "capacity": 20, "refill_rate_per_sec": 5},
+                {"key": "bad-request", "cost": 999, "capacity": 5},  # impossible
+            ]
+        }
+    }
 
-    # Optional per-call overrides (else use defaults from settings)
-    capacity: float | None = Field(default=None, gt=0)
-    refill_rate_per_sec: float | None = Field(default=None, gt=0)
+    key: str = Field(min_length=1, description="Rate limit key (user id, api key, ip, etc.)")
+    cost: float = Field(ge=0, description="Tokens to consume for this operation")
+
+    capacity: float | None = Field(default=None, gt=0, description="Optional override of bucket capacity")
+    refill_rate_per_sec: float | None = Field(
+        default=None, gt=0, description="Optional override of refill rate (tokens/sec)"
+    )
 
 
 class CheckResponse(BaseModel):
+    model_config = {
+        "json_schema_extra": {
+            "examples": [
+                {"allowed": True, "remaining_tokens": 4.0, "retry_after_s": 0.0},
+                {"allowed": False, "remaining_tokens": 0.0, "retry_after_s": 1.0},
+                {"allowed": False, "remaining_tokens": 5.0, "retry_after_s": None},  # impossible
+            ]
+        }
+    }
+
     allowed: bool
     remaining_tokens: float
     retry_after_s: float | None
 
 
-@router.post("", response_model=CheckResponse, summary="Rate-limit decision (token bucket)")
+
+@router.post(
+    "",
+    response_model=CheckResponse,
+    summary="Rate-limit decision (token bucket)",
+    description=(
+        "Decision-only endpoint. Always returns HTTP 200 with an allow/deny decision. "
+        "Sets RateLimit-* headers and Retry-After when denied."
+    ),
+)
 async def check_rate_limit(req: CheckRequest, response: Response, r=Depends(get_redis)):
     cap = req.capacity if req.capacity is not None else settings.BUCKET_CAPACITY
     rate = (

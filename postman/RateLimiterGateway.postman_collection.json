@@ -1,0 +1,70 @@
+{
+  "info": {
+    "name": "Rate Limiter Gateway",
+    "_postman_id": "c9cbb5b6-9a0a-4d6e-9c7b-0b4f0a0f0a01",
+    "description": "Postman collection for Rate-Limiter Gateway endpoints.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8000" }
+  ],
+  "item": [
+    {
+      "name": "Healthz",
+      "request": {
+        "method": "GET",
+        "url": { "raw": "{{baseUrl}}/healthz", "host": ["{{baseUrl}}"], "path": ["healthz"] }
+      }
+    },
+    {
+      "name": "Version",
+      "request": {
+        "method": "GET",
+        "url": { "raw": "{{baseUrl}}/api/version", "host": ["{{baseUrl}}"], "path": ["api", "version"] }
+      }
+    },
+    {
+      "name": "Readyz",
+      "request": {
+        "method": "GET",
+        "url": { "raw": "{{baseUrl}}/api/readyz", "host": ["{{baseUrl}}"], "path": ["api", "readyz"] }
+      }
+    },
+    {
+      "name": "Check (decision-only)",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"key\": \"user-123\",\n  \"cost\": 1\n}\n" },
+        "url": { "raw": "{{baseUrl}}/api/check", "host": ["{{baseUrl}}"], "path": ["api", "check"] }
+      }
+    },
+    {
+      "name": "Enforce (allowed)",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"key\": \"enforce-demo\",\n  \"cost\": 1\n}\n" },
+        "url": { "raw": "{{baseUrl}}/api/enforce", "host": ["{{baseUrl}}"], "path": ["api", "enforce"] }
+      }
+    },
+    {
+      "name": "Enforce (drain bucket)",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"key\": \"enforce-demo\",\n  \"cost\": 5\n}\n" },
+        "url": { "raw": "{{baseUrl}}/api/enforce", "host": ["{{baseUrl}}"], "path": ["api", "enforce"] }
+      }
+    },
+    {
+      "name": "Enforce (expect 429)",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"key\": \"enforce-demo\",\n  \"cost\": 1\n}\n" },
+        "url": { "raw": "{{baseUrl}}/api/enforce", "host": ["{{baseUrl}}"], "path": ["api", "enforce"] }
+      }
+    }
+  ]
+}

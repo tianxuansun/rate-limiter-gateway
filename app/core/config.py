@@ -10,7 +10,7 @@ class Settings(BaseSettings):
     APP_ENV: str = "dev"
     LOG_LEVEL: str = "INFO"
     GIT_SHA: str = "dev"
-    APP_VERSION: str = "0.1.0"
+    APP_VERSION: str = "0.2.0"
 
     # Dependencies
     REDIS_URL: str = "redis://localhost:6379/0"
