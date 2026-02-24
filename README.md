@@ -37,6 +37,18 @@ Additional debug headers:
 Gateway rejects oversized API requests with `413 Payload Too Large`.
 Config: `MAX_BODY_BYTES` (default `32768`).
 
+## Integration
+A Postman collection is available at:
+- `postman/RateLimiterGateway.postman_collection.json`
+
+Set `baseUrl` to your running server (default `http://localhost:8000`).
+
+## Performance (local)
+Run the included k6 test:
+```bash
+make k6
+
+
 ## Quick Start (Dev)
 ```bash
 python3 -m venv .venv
@@ -44,3 +56,4 @@ source .venv/bin/activate
 pip install -r requirements.txt
 pip install -r requirements-dev.txt
 ./scripts/run_dev.sh
+
