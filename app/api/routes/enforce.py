@@ -17,20 +17,54 @@ router = APIRouter()
 
 
 class EnforceRequest(BaseModel):
-    key: str = Field(min_length=1)
-    cost: float = Field(ge=0)
+    model_config = {
+        "json_schema_extra": {
+            "examples": [
+                {"key": "user-123", "cost": 1},
+                {"key": "burst", "cost": 5},
+            ]
+        }
+    }
 
-    capacity: float | None = Field(default=None, gt=0)
-    refill_rate_per_sec: float | None = Field(default=None, gt=0)
+    key: str = Field(min_length=1, description="Rate limit key (user id, api key, ip, etc.)")
+    cost: float = Field(ge=0, description="Tokens to consume for this operation")
+
+    capacity: float | None = Field(default=None, gt=0, description="Optional override of bucket capacity")
+    refill_rate_per_sec: float | None = Field(
+        default=None, gt=0, description="Optional override of refill rate (tokens/sec)"
+    )
 
 
 class EnforceResponse(BaseModel):
+    model_config = {
+        "json_schema_extra": {
+            "examples": [
+                {"allowed": True, "remaining_tokens": 4.0, "retry_after_s": 0.0},
+                {"allowed": False, "remaining_tokens": 0.0, "retry_after_s": 1.0},
+            ]
+        }
+    }
+
     allowed: bool
     remaining_tokens: float
     retry_after_s: float | None
 
 
-@router.post("", response_model=EnforceResponse, summary="Enforced rate limit (429 on deny)")
+
+@router.post(
+    "",
+    response_model=EnforceResponse,
+    summary="Enforced rate limit (429 on deny)",
+    description=(
+        "Enforcement endpoint. Returns 200 when allowed, and 429 Too Many Requests when denied "
+        "(for insufficient tokens). Sets RateLimit-* headers and Retry-After when denied."
+    ),
+    responses={
+        429: {
+            "description": "Rate limit exceeded (insufficient tokens). See Retry-After header.",
+        }
+    },
+)
 async def enforce_rate_limit(req: EnforceRequest, response: Response, r=Depends(get_redis)):
     cap = req.capacity if req.capacity is not None else settings.BUCKET_CAPACITY
     rate = (
